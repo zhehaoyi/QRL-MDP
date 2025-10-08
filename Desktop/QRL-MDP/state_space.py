@@ -1,0 +1,1 @@
+state_space = {"Rx", "Ry", "Rz", "CNOT", "CZ"}

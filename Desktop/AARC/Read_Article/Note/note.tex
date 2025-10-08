@@ -1,0 +1,128 @@
+% !TEX root = notes.tex
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lipsum} 
+\usepackage{hyperref}
+\usepackage{geometry} 
+\usepackage{ctex}
+\usepackage{braket}
+\geometry{margin=1in}
+
+\usepackage[english]{babel}
+\usepackage{datetime}
+\newdateformat{mydate}{\THEYEAR-\twodigit{\THEMONTH}-\twodigit{\THEDAY}}
+
+\usepackage{cite}
+
+\title{Paper Reading Notes}
+\author{Zhehao Yi}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+
+\section{QNN-VRCS: A Quantum Neural Network for
+Vehicle Road Cooperation Systems}
+\textbf{Date:} September 15. 2025
+
+\subsection*{Basic Info}
+\begin{itemize}
+    \item \textbf{Authors:} Nouhaila Innan, Bikash K. Behera, Saif Al-Kuwari, and Ahmed Farouk
+    \item \textbf{Published in:} IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS, 2025
+    \item \textbf{DOI/Link:} \url{https://ieeexplore.ieee.org/document/10887095}
+\end{itemize}
+
+\subsection*{Summary}
+Vehicle Road Cooperation System means the real-time intersection between vehicle and road basic insturtion (traffic lights, monitors, sensors). But there are some problems in traditional VRCS, so far, VRCS depends on the heuristic methods (such as fixed-duration traffic light scheduling), but when facing dynamic and complex traffic flow, this method will go wrong, plus the coming 6G, the data between vehicles and roads will be larger (sensors, car networking), and traditional algorithms will struggle in terms of computational load and real-time performance. So this article proposed using Quantum Neural Network to solve VRCS problems.
+
+They use three different encoding methord to generate quantum states (FRQI, NEQR, AE)). This article use two datasets, one is Carla (Simulated traffic lights), aother is Cropped Lisa (Real world traffic lights) to test the QNN. The results shows that when using carla dataset, QNN with AE encoding (Accurancy: 97.42\%) outperforms CNN (Accurancy: 80\% - 90\%) for small inputs (2$\times$2), and when using Cropped Lisa dataset, QNN with AE encoding still performance the best, while other methods only made 43.33\% - 77.09\%.
+
+\subsection*{Key Contributions}
+\begin{itemize}
+    \item A new QNN architecture is proposed and implemented specifically for VRCS.
+    \item Evaluated the robustness of QNN under various noises
+    \item Underscored the innovative role of QNNs in ITS, presenting a significant step toward embedding quantum-augmented intelligence in vehicular technologies.
+\end{itemize}
+
+\subsection*{Methods}
+\subsubsection*{Encoding}
+\begin{itemize}
+    \item Flexible Representation of Quantum Images (FRQI): Convert pixel grayscale to angle $\theta$, encode into the qubits amplitude. $\ket{i}$ means associated pixel position encoding.
+    \begin{equation}
+            \ket{I(\theta)} = \frac{1}{2^n}\Sigma_{i = 0}^{2^{2n} - 1}(\cos\theta_i\ket{0} + \sin\theta_i\ket{1})) \otimes \ket{i}
+    \end{equation}
+    \begin{equation}
+        \theta = Pixel Value \times \frac{\pi}{255}
+    \end{equation}
+    \item Novel Enhanced Quantum Representation (NEQR): Use a series of qubits to represent the intensity value of pixels presented by a set of CNOT gates. For representing two-dimensional images, we define the position of the image by its row and column, Y , X, respectively. 0 represents black, 1 represents white (Grayscale); Grayscale images with intensity values
+ranging from 0 to 255 are represented by 8 bits; color images are represented by 24 bits broken up into 3 groups of 8 bits, where each group of 8 bits represents the pixel color of red, green and yellow.
+pixel value:
+\begin{equation}
+    f(X, Y) = C_{YX}^0, C_{YX}^1,...,C_{YX}^{q-2}, C_{YX}^{q-1} \in [0, 1], f(X,Y)\in [0, 2^{q-1}]
+\end{equation}
+$C$ is a binary representation. The general expression to represent an image for a $2^n \times 2^n$ dimension $\ket{I}$ is given as:
+\begin{equation}
+    \ket{I} = \frac{1}{2^n}\Sigma_{Y}^{2^{2n-1}}\Sigma_{X}^{2^{2n-1}}\ket{\otimes_{i=0}^{q-1}}\ket{C_{YX}^{i}}\ket{YX}
+\end{equation}
+$n$ represents the size index of the image, $q$ represents the number of bits required to represent pixel intensity. So the total number of qubits will be $2n + q$.
+    \item Angle Encoding (AE):
+    \begin{equation}
+        \theta = \frac{\pi}{255} \times Pixel Value
+    \end{equation}
+\end{itemize}
+
+\subsubsection*{Classification}
+\begin{itemize}
+    \item $UU^{\dag}$:
+          \begin{itemize}
+            \item First choose a centroid of each image.
+            \item Build quantum circuit: $U$ for centroid information (get $\ket{\psi_i}$), $U^{\dag}$ for the test data (get $\ket{\phi_i}$).
+            \item Compute the inner product $\braket{\psi_i | \phi_i}$, compare the similarity between the sample and centroid.
+            \item The samples are classified into the category with the greatest similarity.
+            \item Validate the classifications against actual test data to determine if the data corresponds to red, yellow, or green images
+            \item Compute the overall accurancy $c_1N_1 + c_2N_2 + c_3N_3$. $c_i$ represents classification accuracies for each color, $N_i$ denotes the probabilities of these image categories (Number of specific images/ Total number of images)
+          \end{itemize}
+    \item Variational $UU^{\dag}$:
+          \begin{itemize}
+            \item Almost than same as $UU^{\dag}$, but add the Hadamard Gates
+            \item The expressibility of the circuit is good.
+          \end{itemize}
+    \item Quantum Nerual Network:
+          \begin{itemize}
+            \item Use AE to convert the pixels of the images into $\theta$ value.
+            \item Construction of quantum circuit.
+                  \begin{itemize}
+                    \item Initialization the qubits.
+                    \item Apply Rotation X gates.
+                    \item Apply Entangle layer with Rotation Y and CNOT
+                  \end{itemize}
+            \item Mesurement
+            \item MSE cost function
+            \item Optimization
+          \end{itemize}
+\end{itemize}
+
+\subsection*{Results}
+
+
+\subsection*{Personal Notes}
+
+
+\subsection*{Reference}
+Here is the reference paper \cite{QNN-VRCS}
+
+\newpage
+\begin{thebibliography}{99}
+  \bibitem{QNN-VRCS}
+  Nouhaila Innan, Bikash K. Behera, Saif Al-Kuwari, and Ahmed Farouk.  
+  "QNN-VRCS: A Quantum Neural Network for Vehicle Road Cooperation Systems."  
+  \textit{IEEE Transactions on Intelligent Transportation Systems}, 2025, pp. 1--10.
+\end{thebibliography}
+
+\end{document}
